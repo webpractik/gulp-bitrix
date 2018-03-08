@@ -20,7 +20,13 @@ const gulp         = require('gulp'),
     sourcemaps   = require('gulp-sourcemaps'),
 
     duration     = require('gulp-duration'),     // время выполнения
-    debug        = require('gulp-debug');        // отладка
+    debug        = require('gulp-debug'),        // отладка
+    webpackStream = require('webpack-stream'),
+    webpack = webpackStream.webpack,
+    named = require('vinyl-named');
+//const path = require('path');
+const through2 = require('through2').obj;
+
 
 var webpractikBuild = function (options) {
     var options = options || {};
@@ -222,11 +228,21 @@ var webpractikBuild = function (options) {
     });
 
     gulp.task('jsComponents', options.jsComponentsTask || function() {
+        var filePath = '';
+        var pathP = require('path');
 
         return gulp.src(path.src.jsComponents, {since: gulp.lastRun('jsComponents')})
             .pipe(plumber())
             .pipe(debug({'title': '- jsComponents'}))
             .pipe(sourcemaps.init())
+            .pipe(through2(
+                function(file, enc, callback) {
+                    filePath = pathP.normalize(pathP.relative(process.cwd(), pathP.dirname(file.path)));
+                    console.log(__dirname + '/' + filePath);
+                    callback(null, file);
+                }
+            ))
+            .pipe(webpackStream({output: {filename: 'script.js', publicPath:__dirname + '/' + filePath}}))
             .pipe(babel({
                 presets: [
                     [es2015],
