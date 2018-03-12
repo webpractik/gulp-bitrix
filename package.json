@@ -1,7 +1,7 @@
 {
   "name": "webpractik-build",
   "description": "Building Projects for BitrixCMS on Gulp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Webpractik",
     "email": "info@webpractik.ru"
