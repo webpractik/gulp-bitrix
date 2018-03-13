@@ -22,6 +22,7 @@ const gulp         = require('gulp'),
 	duration     = require('gulp-duration'),     // время выполнения
 	debug        = require('gulp-debug'),       // отладка
 	chokidar	= require('chokidar'),
+	env			= require('node-env-file'),
 	gulpIf      = require('gulp-if');
 
 var webpractikBuild = function (options) {
@@ -31,6 +32,7 @@ var webpractikBuild = function (options) {
 	var isDevelopment = function() {
 		return !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
 	};
+
 
 // PATH
 // ====
@@ -236,7 +238,7 @@ var webpractikBuild = function (options) {
 	});
 
 	gulp.task('jsComponents', options.jsComponentsTask || function() {
-
+		console.log(process.env.NODE_ENV);
 		return gulp.src(path.src.jsComponents, {since: gulp.lastRun('jsComponents')})
 			.pipe(plumber(gulpIf(isDevelopment(), notify.onError({
 				message: '<%= error.message %>',
@@ -344,10 +346,25 @@ var webpractikBuild = function (options) {
 		callback();
 	});
 
+	/* Берем значения из .env файла */
+	gulp.task('get-env', function(callback) {
+		try {
+			env(__dirname + '/.env')
+		} catch (e) {
+			console.log(e.message + ' [Build will be started with production settings]');
+			process.env.NODE_ENV = 'production';
+		}
+		callback();
+	});
+
+
+
 // START
 // =====
-	gulp.task('default', options.defaultTasks || gulp.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'));
-	gulp.task('one', options.oneTasks || gulp.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')));
+	gulp.task('default', options.defaultTasks || gulp.series('get-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'));
+	gulp.task('one', options.oneTasks || gulp.series('sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')));
+	gulp.task('prod', options.defaultTasks || gulp.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'));
+	gulp.task('prod-one', options.oneTasks || gulp.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')));
 	gulp.task('dev', options.defaultTasks || gulp.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'));
 	gulp.task('one-dev', options.oneTasks || gulp.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')));
 // gulp.task('local', ['sprite', 'sass', 'sassComponents', 'js', 'img', 'pic', 'fonts', 'watch', 'browserSync']);
