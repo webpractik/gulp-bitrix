@@ -23,10 +23,13 @@ const gulp         = require('gulp'),
 	debug        = require('gulp-debug'),       // отладка
 	chokidar	= require('chokidar'),
 	env			= require('node-env-file'),
+	del			= require('del'),
+	vinyl		= require('vinyl'),
 	gulpIf      = require('gulp-if');
 
 var webpractikBuild = function (options) {
 	var options = options || {};
+	options.path = options.path || {};
 
 	/*Функция, которая выясняет является ли текущая среда разработкой*/
 	var isDevelopment = function() {
@@ -36,7 +39,7 @@ var webpractikBuild = function (options) {
 
 // PATH
 // ====
-	var path = options.path || {
+	var path = Object.assign(options.path, {
 		build: {
 			js:     'build/js/',
 			css:    'build/css/',
@@ -81,7 +84,7 @@ var webpractikBuild = function (options) {
 			build:   './build',
 			modules: './node_modules'
 		}
-	};
+	});
 
 	var includePath = options.includePath || '/assets/sass/global/include/',
 		staticFolder = options.staticFolder || '/local/static/';
@@ -101,7 +104,7 @@ var webpractikBuild = function (options) {
 			}), function (error) {
 				console.log(error.message)
 			})))
-			.pipe(sourcemaps.init())
+			.pipe(gulpIf(isDevelopment(), sourcemaps.init()))
 			.pipe(sass.sync({
 				includePaths: [process.env['INIT_CWD'] + includePath]
 			}))
@@ -112,7 +115,7 @@ var webpractikBuild = function (options) {
 			}))
 			.pipe(debug({'title': '- sass'}))
 			.pipe(duration('sass time'))
-			.pipe(sourcemaps.write('.'))
+			.pipe(gulpIf(isDevelopment(), sourcemaps.write()))
 			.pipe(gulp.dest(path.build.css))
 		//.pipe(reload({stream: true}));
 	});
@@ -126,7 +129,7 @@ var webpractikBuild = function (options) {
 			}), function (error) {
 				console.log(error.message)
 			})))
-			.pipe(sourcemaps.init())
+			.pipe(gulpIf(isDevelopment(), sourcemaps.init()))
 			.pipe(sass.sync({
 				includePaths: [process.env['INIT_CWD'] + includePath]
 			}))
@@ -137,7 +140,7 @@ var webpractikBuild = function (options) {
 			}))
 			.pipe(debug({'title': '- sassComponents'}))
 			.pipe(duration('sassComponents time'))
-			.pipe(sourcemaps.write('./'))
+			.pipe(gulpIf(isDevelopment(), sourcemaps.write()))
 			.pipe(gulp.dest(function(file) {
 				return file.base;
 			}))
@@ -155,6 +158,7 @@ var webpractikBuild = function (options) {
 			}), function (error) {
 				console.log(error.message)
 			})))
+			.pipe(gulpIf(isDevelopment(), sourcemaps.init()))
 			.pipe(sass.sync({
 				includePaths: [process.env['INIT_CWD'] + includePath]
 			}))
@@ -165,6 +169,7 @@ var webpractikBuild = function (options) {
 			}))
 			.pipe(debug({'title': '- sassProject'}))
 			.pipe(duration('sassProject time'))
+			.pipe(gulpIf(isDevelopment(), sourcemaps.write()))
 			.pipe(gulp.dest(path.build.css + 'global/'))
 		//.pipe(reload({stream: true}));
 	});
@@ -205,6 +210,7 @@ var webpractikBuild = function (options) {
 			}), function (error) {
 				console.log(error.message)
 			})))
+			.pipe(gulpIf(isDevelopment(), sourcemaps.init()))
 			.pipe(babel({
 				presets: [
 					[es2015],
@@ -225,6 +231,7 @@ var webpractikBuild = function (options) {
 			}), function (error) {
 				console.log(error.message)
 			})))
+			.pipe(gulpIf(isDevelopment(), sourcemaps.init()))
 			.pipe(babel({
 				presets: [
 					[es2015],
@@ -247,7 +254,7 @@ var webpractikBuild = function (options) {
 				console.log(error.message)
 			})))
 			.pipe(debug({'title': '- jsComponents'}))
-			.pipe(sourcemaps.init())
+			.pipe(gulpIf(isDevelopment(), sourcemaps.init()))
 			.pipe(babel({
 				presets: [
 					[es2015],
@@ -255,7 +262,7 @@ var webpractikBuild = function (options) {
 				]
 			}))
 			.pipe(duration('jsComponents time'))
-			.pipe(sourcemaps.write('.'))
+			.pipe(gulpIf(isDevelopment(), sourcemaps.write()))
 			.pipe(gulp.dest(function(file) {
 				return file.base;
 			}))
@@ -305,21 +312,40 @@ var webpractikBuild = function (options) {
 		});
 	});
 
+	/* Выводит расширение файла */
+	var getExtension = function (string) {
+		var arrStr = string.split('.');
+		var strLen = arrStr[arrStr.length - 1];
+		return strLen;
+	};
+
+	/* Возвращает путь к собранному файлу */
+	var getBuidExtension = function (string, ext) {
+		var strLen = getExtension(string).length;
+		return string.substr(0, string.length - strLen) + ext;
+	};
+
+
+
 // WATCH
 // =====
 	gulp.task('watch', options.watchTask || function() {
-		gulp.watch(path.src.sass, {delay: isDevelopment() ? 200 : 2000}, gulp.series('sass'));
-		gulp.watch(path.src.sassInclude, {delay: isDevelopment() ? 200 : 2000}, gulp.series('sassProject'));
-		gulp.watch(path.src.sassComponents, gulp.series('sassComponents')).on('ready', function () {
-			console.log('end');
+		gulp.watch(path.src.sass, {delay: isDevelopment() ? 200 : 1000}, gulp.series('sass'));
+		gulp.watch(path.src.sassInclude, {delay: isDevelopment() ? 200 : 1000}, gulp.series('sassProject'));
+		gulp.watch(path.src.sassComponents, gulp.series('sassComponents')).on('unlink', function (e) {
+			del(getBuidExtension(e, 'css'), {force: true});
+			del(getBuidExtension(e, 'css.map'), {force: true});
 		});
-		gulp.watch(path.src.js, {delay: isDevelopment() ? 200 : 2000}, gulp.series('js'));
-		gulp.watch(path.src.jsx, {delay: isDevelopment() ? 200 : 2000}, gulp.series('jsx'));
-		gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? 200 : 2000}, gulp.series('jsComponents'));
-		gulp.watch(path.src.sprite, {delay: isDevelopment() ? 200 : 2000}, gulp.series('sprite', 'sass'));
-		gulp.watch(path.src.img, {delay: isDevelopment() ? 200 : 2000}, gulp.series('img'));
-		gulp.watch(path.src.pic, {delay: isDevelopment() ? 200 : 2000}, gulp.series('pic'));
-		return gulp.watch(path.src.fonts, {delay: isDevelopment() ? 200 : 2000}, gulp.series('fonts'));
+		gulp.watch(path.src.js, {delay: isDevelopment() ? 200 : 1000}, gulp.series('js'));
+		gulp.watch(path.src.jsx, {delay: isDevelopment() ? 200 : 1000}, gulp.series('jsx'));
+		gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? 200 : 1000}, gulp.series('jsComponents')).on('unlink', function (e) {
+			del(getBuidExtension(e, 'js', path.build.js), {force: true});
+			del(getBuidExtension(e, 'js.map', path.build.js), {force: true});
+		});
+		gulp.watch(path.src.sprite, {delay: isDevelopment() ? 200 : 1000}, gulp.series('sprite', 'sass'));
+		gulp.watch(path.src.img, {delay: isDevelopment() ? 200 : 1000}, gulp.series('img'));
+		gulp.watch(path.src.pic, {delay: isDevelopment() ? 200 : 1000}, gulp.series('pic'));
+		return gulp.watch(path.src.fonts, {delay: isDevelopment() ? 200 : 1000}, gulp.series('fonts'));
 		// gulp.watch(path.src.php,['php']);
 	});
 

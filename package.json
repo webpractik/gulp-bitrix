@@ -19,7 +19,9 @@
     "gulp.spritesmith": "^6.9.0",
     "imagemin-pngquant": "^5.0.1",
     "rimraf": "^2.6.2",
-    "chokidar": "^2.0.2"
+    "chokidar": "^2.0.2",
+    "del": "^3.0.0",
+    "vinyl": "^2.1.0"
   },
   "dependencies": {
     "babel-core": "^6.26.0",
