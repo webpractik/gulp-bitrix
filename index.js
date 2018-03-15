@@ -393,8 +393,6 @@ var webpractikBuild = function (options) {
 	gulp.task('prod-one', options.oneTasks || gulp.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')));
 	gulp.task('dev', options.defaultTasks || gulp.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'));
 	gulp.task('one-dev', options.oneTasks || gulp.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')));
-// gulp.task('local', ['sprite', 'sass', 'sassComponents', 'js', 'img', 'pic', 'fonts', 'watch', 'browserSync']);
-// gulp.task('local-watch', ['watch', 'browserSync']);
 
 };
 
