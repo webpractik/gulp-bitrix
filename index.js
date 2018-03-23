@@ -181,15 +181,10 @@ module.exports = function (options) {
     });
 
     /* Очистка билда */
-    gulp.task('clean', function(cb) {
-        return rimraf(path.clean.build, cb);
-    });
+    requireTask('clean', './src/clean', {path: path, gulp: gulp, callback: function () {}});
 
     /* Очистка полная */
-    gulp.task('full-clean', function(cb) {
-        rimraf(path.clean.build, cb);
-        return rimraf(path.clean.modules, cb);
-    });
+    requireTask('full-clean', './src/clean', {path: path, gulp: gulp, callback: function () {}});
 
     /* Переключаем на окружение development */
     gulp.task('set-dev-node-env', function(callback) {
