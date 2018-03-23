@@ -1,38 +1,43 @@
 'use strict';
-
-var gulp         = require('gulp'),
-    plumber      = require('gulp-plumber'),		 // уведомления об ошибках
-    autoprefixer = require('gulp-autoprefixer'), // установка префиксов
-    notify       = require('gulp-notify'),       // всплывающие уведомления
-    imagemin     = require('gulp-imagemin'),	 // минификация изображений
-    newer        = require('gulp-newer'),        // ограничение выборки для ускорения компиляции
-    sass         = require('gulp-sass'),         // компилятор sass на C без compass
-    rimraf       = require('rimraf'),            // удаление файлов
-    jscs         = require('gulp-jscs'),         // проверка js файлов на стандарт
-    browserSync  = require('browser-sync'),      // livereload
-    reload       = browserSync.reload,
-
-    babel        = require('gulp-babel'),        // babel
-    es2015       = require('babel-preset-es2015'),
-    react        = require('babel-preset-react'),
-
-    spritesmith  = require('gulp.spritesmith'),
-    sourcemaps   = require('gulp-sourcemaps'),
-
-    duration     = require('gulp-duration'),     // время выполнения
-    debug        = require('gulp-debug'),       // отладка
-    chokidar	= require('chokidar'),
-    env			= require('node-env-file'),
-    del			= require('del'),
-    vinyl		= require('vinyl'),
-    gulpIf      = require('gulp-if');
-
 module.exports = function (options) {
+    var gulp         = require('gulp'),
+        plumber      = require('gulp-plumber'),		 // уведомления об ошибках
+        autoprefixer = require('gulp-autoprefixer'), // установка префиксов
+        notify       = require('gulp-notify'),       // всплывающие уведомления
+        imagemin     = require('gulp-imagemin'),	 // минификация изображений
+        newer        = require('gulp-newer'),        // ограничение выборки для ускорения компиляции
+        sass         = require('gulp-sass'),         // компилятор sass на C без compass
+        rimraf       = require('rimraf'),            // удаление файлов
+        jscs         = require('gulp-jscs'),         // проверка js файлов на стандарт
+        browserSync  = require('browser-sync'),      // livereload
+        reload       = browserSync.reload,
+
+        babel        = require('gulp-babel'),        // babel
+        es2015       = require('babel-preset-es2015'),
+        react        = require('babel-preset-react'),
+
+        spritesmith  = require('gulp.spritesmith'),
+        sourcemaps   = require('gulp-sourcemaps'),
+
+        duration     = require('gulp-duration'),     // время выполнения
+        debug        = require('gulp-debug'),       // отладка
+        chokidar	= require('chokidar'),
+        env			= require('node-env-file'),
+        del			= require('del'),
+        gulpIf      = require('gulp-if');
 
     var options = options || {};
     options.path = options.path || {};
+    options.excludeTasks = options.excludeTasks || [];
+    options.includeTasks = options.includeTasks || [];
+    options.sprite = {};
+
+
+    var build = {};
 
     var __dirname = options.dirName || __dirname;
+
+
     /*Функция, которая выясняет является ли текущая среда разработкой*/
     var isDevelopment = function() {
         return !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
@@ -91,264 +96,88 @@ module.exports = function (options) {
     var includePath = options.includePath || '/assets/sass/global/include/',
         staticFolder = options.staticFolder || '/local/static/';
 
+    function requireTask(taskName, path, options) {
+        options = options || {};
+        options.taskName = taskName;
+        gulp.task(taskName, function(callback) {
+            require(path)(options);
+            callback();
+        });
+    }
 // SASS
 // ====
-    gulp.task('sass', options.taskSass || function() {
-        return gulp.src(path.src.sass)
-            .pipe(newer({
-                    dest: path.build.css,
-                    ext:  '.css'
-                })
-            )
-            .pipe(plumber(gulpIf(isDevelopment(), notify.onError({
-                message: '<%= error.message %>',
-                title: 'Sass Error!'
-            }), function (error) {
-                console.log(error.message)
-            })))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.init()))
-            .pipe(sass.sync({
-                includePaths: [process.env['INIT_CWD'] + includePath]
-            }))
-            .pipe(autoprefixer({
-                browsers: ['last 12 versions', '> 1%'],
-                cascade:  false,
-                remove:   false
-            }))
-            .pipe(debug({'title': '- sass'}))
-            .pipe(duration('sass time'))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.write()))
-            .pipe(gulp.dest(path.build.css))
-        //.pipe(reload({stream: true}));
-    });
-
+    requireTask('sass', './src/sass', {path: path, includePath: includePath, gulp: gulp, sourcemaps: options.sourcemaps});
 // components
-    gulp.task('sassComponents', options.sassComponents || function() {
-        return gulp.src(path.src.sassComponents, {since: gulp.lastRun('sassComponents')})
-            .pipe(plumber(gulpIf(isDevelopment(), notify.onError({
-                message: '<%= error.message %>',
-                title: 'Sass Components Error!'
-            }), function (error) {
-                console.log(error.message)
-            })))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.init()))
-            .pipe(sass.sync({
-                includePaths: [process.env['INIT_CWD'] + includePath]
-            }))
-            .pipe(autoprefixer({
-                browsers: ['last 12 versions', '> 1%'],
-                cascade:  false,
-                remove:   false
-            }))
-            .pipe(debug({'title': '- sassComponents'}))
-            .pipe(duration('sassComponents time'))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.write()))
-            .pipe(gulp.dest(function(file) {
-                return file.base;
-            }))
-        //.pipe(reload({stream: true}));
-    });
-
+    requireTask('sassComponents', './src/sassComponents', {path: path, includePath: includePath, gulp: gulp, sourcemaps: options.sourcemaps});
 
 // project
 // данный task по сути костыль, чтобы обойти newer и подкючаемые файлы (_*.sass) запускались
-    gulp.task('sassProject', options.sassProject || function() {
-        return gulp.src(path.src.sassProject)
-            .pipe(plumber(gulpIf(isDevelopment(), notify.onError({
-                message: '<%= error.message %>',
-                title: 'Sass Project Error!'
-            }), function (error) {
-                console.log(error.message)
-            })))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.init()))
-            .pipe(sass.sync({
-                includePaths: [process.env['INIT_CWD'] + includePath]
-            }))
-            .pipe(autoprefixer({
-                browsers: ['last 12 versions', '> 1%'],
-                cascade:  false,
-                remove:   false
-            }))
-            .pipe(debug({'title': '- sassProject'}))
-            .pipe(duration('sassProject time'))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.write()))
-            .pipe(gulp.dest(path.build.css + 'global/'))
-        //.pipe(reload({stream: true}));
-    });
-
+    requireTask('sassProject', './src/sassProject', {path: path, includePath: includePath, gulp: gulp, sourcemaps: options.sourcemaps});
 
 // SPRITE
 // ======
-    gulp.task('sprite', options.spriteTask || function() {
-        var spriteData =
-            gulp.src(path.src.sprite)
-                .pipe(spritesmith({
-                    imgName: 'sprite.png',
-                    cssName: '_sprite.sass',
-                    imgPath: staticFolder + path.build.sprite + 'sprite.png'
-                }));
-
-        spriteData.img.pipe(gulp.dest(path.build.sprite)); // путь, куда сохраняем картинку
-        return spriteData.css.pipe(gulp.dest(path.src.sprLang)); // путь, куда сохраняем стили
-    });
-
+    requireTask('sprite', './src/sprite', {path: path, gulp: gulp, staticFolder: staticFolder,  sprite: {imgName: options.sprite.imgName, cssName: options.sprite.cssName}});
 
 // PHP
 // ===
-    gulp.task('php', options.phpTask || function() {
-        return gulp.src(path.src.php)
-            .pipe(debug({'title': '- php'}))
-            .pipe(reload({stream: true}));
-    });
-
+    requireTask('php', './src/php', {gulp: gulp, path: path});
 
 // JS
 // ==
-    gulp.task('js', options.jsTask || function() {
-        return gulp.src(path.src.js, {since: gulp.lastRun('js')})
-            .pipe(plumber(gulpIf(isDevelopment(), notify.onError({
-                message: '<%= error.message %>',
-                title: 'Js Task Error!'
-            }), function (error) {
-                console.log(error.message)
-            })))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.init()))
-            .pipe(babel({
-                presets: [
-                    [es2015],
-                    [react]
-                ]
-            }))
-            .pipe(debug({'title': '- js'}))
-            .pipe(duration('js time'))
-            .pipe(gulp.dest(path.build.js))
-            .pipe(reload({stream: true}));
-    });
-
-    gulp.task('jsx', options.jsxTask || function() {
-        return gulp.src(path.src.jsx, {since: gulp.lastRun('jsx')})
-            .pipe(plumber(gulpIf(isDevelopment(), notify.onError({
-                message: '<%= error.message %>',
-                title: 'Jsx task Error!'
-            }), function (error) {
-                console.log(error.message)
-            })))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.init()))
-            .pipe(babel({
-                presets: [
-                    [es2015],
-                    [react]
-                ]
-            }))
-            .pipe(debug({'title': '- js'}))
-            .pipe(duration('js time'))
-            .pipe(gulp.dest(path.build.js))
-            .pipe(reload({stream: true}));
-    });
-
-    gulp.task('jsComponents', options.jsComponentsTask || function() {
-        console.log(process.env.NODE_ENV);
-        return gulp.src(path.src.jsComponents, {since: gulp.lastRun('jsComponents')})
-            .pipe(plumber(gulpIf(isDevelopment(), notify.onError({
-                message: '<%= error.message %>',
-                title: 'Jsx Components task Error!'
-            }), function (error) {
-                console.log(error.message)
-            })))
-            .pipe(debug({'title': '- jsComponents'}))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.init()))
-            .pipe(babel({
-                presets: [
-                    [es2015],
-                    [react]
-                ]
-            }))
-            .pipe(duration('jsComponents time'))
-            .pipe(gulpIf(isDevelopment(), sourcemaps.write()))
-            .pipe(gulp.dest(function(file) {
-                return file.base;
-            }))
-            .pipe(reload({stream: true}));
-    });
+    requireTask('js', './src/js', {path: path, gulp: gulp, sourcemaps: options.sourcemaps});
+    requireTask('jsx', './src/jsx', {path: path, gulp: gulp, sourcemaps: options.sourcemaps});
+    requireTask('jsComponents', './src/jsComponents', {path: path, gulp: gulp, sourcemaps: options.sourcemaps});
 
 // IMAGES
 // ======
-    gulp.task('img', options.imgTask || function() {
-        return gulp.src(path.src.img)
-            .pipe(newer(path.build.img))
-            .pipe(debug({'title': '- img'}))
-            .pipe(imagemin({progressive: true}))
-            .pipe(duration('img time'))
-            .pipe(gulp.dest(path.build.img))
-            .pipe(reload({stream: true}));
-    });
-    gulp.task('pic', options.picTask || function() {
-        return gulp.src(path.src.pic)
-            .pipe(newer(path.build.pic))
-            .pipe(debug({'title': '- pic'}))
-            .pipe(imagemin({progressive: true}))
-            .pipe(duration('pic time'))
-            .pipe(gulp.dest(path.build.pic))
-            .pipe(reload({stream: true}));
-    });
-
+    requireTask('img', './src/img', {path: path, gulp: gulp});
+    requireTask('pic', './src/pic', {path: path, gulp: gulp});
 
 // FONTS
 // =====
-    gulp.task('fonts', options.fontsTask || function() {
-        return gulp.src(path.src.fonts)
-            .pipe(newer(path.build.fonts))
-            .pipe(gulp.dest(path.build.fonts))
-            .pipe(reload({stream: true}));
-    });
+    requireTask('fonts', './src/fonts', {path: path, gulp: gulp});
 
 
 // SERVER (only for local development)
 // ===================================
-    gulp.task('browserSync', options.browserSyncTask || function() {
-        browserSync({
-            proxy:  'letovo.dev:8080',
-            port:   8080,
-            open:   false,
-            notify: true
-        });
-    });
+    requireTask('browserSynch', './src/browserSynch', {gulp: gulp});
 
     /* Выводит расширение файла */
     var getExtension = function (string) {
-        var arrStr = string.split('.');
-        var strLen = arrStr[arrStr.length - 1];
-        return strLen;
-    };
+            var arrStr = string.split('.');
+            var strLen = arrStr[arrStr.length - 1];
+            return strLen;
+        },
 
-    /* Возвращает путь к собранному файлу */
-    var getBuidExtension = function (string, ext) {
-        var strLen = getExtension(string).length;
-        return string.substr(0, string.length - strLen) + ext;
-    };
+        /* Возвращает путь к собранному файлу */
+        getBuidExtension = function (string, ext) {
+            var strLen = getExtension(string).length;
+            return string.substr(0, string.length - strLen) + ext;
+        },
+
+        /* Переменные задержки обработки watcher-а */
+        developmentWatchDelay = options.developmentWatchDelay || 200,
+        productionWatchDelay = options.productionWatchDelay || 1000;
 
 
-
-// WATCH
-// =====
-    gulp.task('watch', options.watchTask || function() {
-        gulp.watch(path.src.sass, {delay: isDevelopment() ? 200 : 1000}, gulp.series('sass'));
-        gulp.watch(path.src.sassInclude, {delay: isDevelopment() ? 200 : 1000}, gulp.series('sassProject'));
+    /* Задача watcher-а */
+    gulp.task('watch', function() {
+        gulp.watch(path.src.sass, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sass'));
+        gulp.watch(path.src.sassInclude, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sassProject'));
         gulp.watch(path.src.sassComponents, gulp.series('sassComponents')).on('unlink', function (e) {
             del(getBuidExtension(e, 'css'), {force: true});
             del(getBuidExtension(e, 'css.map'), {force: true});
         });
-        gulp.watch(path.src.js, {delay: isDevelopment() ? 200 : 1000}, gulp.series('js'));
-        gulp.watch(path.src.jsx, {delay: isDevelopment() ? 200 : 1000}, gulp.series('jsx'));
-        gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? 200 : 1000}, gulp.series('jsComponents')).on('unlink', function (e) {
+        gulp.watch(path.src.js, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('js'));
+        gulp.watch(path.src.jsx, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsx'));
+        gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsComponents')).on('unlink', function (e) {
             del(getBuidExtension(e, 'js', path.build.js), {force: true});
             del(getBuidExtension(e, 'js.map', path.build.js), {force: true});
         });
-        gulp.watch(path.src.sprite, {delay: isDevelopment() ? 200 : 1000}, gulp.series('sprite', 'sass'));
-        gulp.watch(path.src.img, {delay: isDevelopment() ? 200 : 1000}, gulp.series('img'));
-        gulp.watch(path.src.pic, {delay: isDevelopment() ? 200 : 1000}, gulp.series('pic'));
-        return gulp.watch(path.src.fonts, {delay: isDevelopment() ? 200 : 1000}, gulp.series('fonts'));
-        // gulp.watch(path.src.php,['php']);
+        gulp.watch(path.src.sprite, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sprite', 'sass'));
+        gulp.watch(path.src.img, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('img'));
+        gulp.watch(path.src.pic, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('pic'));
+        return gulp.watch(path.src.fonts, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('fonts'));
     });
 
     /* Очистка билда */
@@ -375,26 +204,81 @@ module.exports = function (options) {
     });
 
     /* Берем значения из .env файла */
-    gulp.task('get-env', function(callback) {
-        try {
-            env(__dirname + '/.env')
-        } catch (e) {
-            console.log(e.message + ' [Build will be started with production settings]');
-            process.env.NODE_ENV = 'production';
-        }
+    requireTask('get-env', './src/getEnv', {gulp: gulp, dirname: __dirname});
+
+    /* Проверяем есть у массива данный элемент, если массив пустой - то возвращем true*/
+    var inArray = function (str, array) {
+        if (!array[0]) return true;
+        return (array.indexOf(str) !== -1);
+    };
+
+    /* Пустая функция */
+    var skip = function (callback) {
+        console.log('skipped');
         callback();
-    });
+    };
 
 
 // START
 // =====
-    return {
-        def: options.def || gulp.series('get-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'),
-        one: options.one || gulp.series('get-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')),
-        prod: options.prod || gulp.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'),
-        prodOne: options.prodOne || gulp.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx')),
-        dev: options.dev || gulp.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'),'watch'),
-        devOne: options.devOne || gulp.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', gulp.parallel('sass', 'sassComponents', 'jsComponents', 'js', 'jsx'))
-    }
+    build.path = path;
+    build.options = options;
+
+    build.sass = !inArray('sass', options.excludeTasks) && inArray('sass', options.includeTasks) ? gulp.series('sass') : skip,
+        build.sassComponents = !inArray('sassComponents', options.excludeTasks) && inArray('sassComponents', options.includeTasks) ? gulp.series('sassComponents') : skip,
+        build.jsComponents = !inArray('jsComponents', options.excludeTasks) && inArray('jsComponents', options.includeTasks) ? gulp.series('jsComponents') : skip,
+        build.sassProject = !inArray('sassProject', options.excludeTasks) && inArray('sassProject', options.includeTasks) ? gulp.series('sassProject') : skip,
+        build.js = !inArray('js', options.excludeTasks) && inArray('js', options.includeTasks) ? gulp.series('js') : skip,
+        build.jsx = !inArray('jsx', options.excludeTasks) && inArray('jsx', options.includeTasks) ? gulp.series('jsx') : skip,
+        build.sprite = !inArray('sprite', options.excludeTasks) && inArray('sprite', options.includeTasks) ? gulp.series('sprite') : skip,
+        build.img =	!inArray('img', options.excludeTasks) && inArray('img', options.includeTasks) ? gulp.series('img') : skip,
+        build.pic = !inArray('pic', options.excludeTasks) && inArray('pic', options.includeTasks) ? gulp.series('pic') : skip,
+        build.fonts = !inArray('fonts', options.excludeTasks) && inArray('fonts', options.includeTasks) ? gulp.series('fonts') : skip,
+        build.watch = !inArray('watch', options.excludeTasks) && inArray('watch', options.includeTasks) ? gulp.series('watch') : skip,
+        build.getEnv = !inArray('get-env', options.excludeTasks) ? gulp.series('get-env') : skip,
+        build.setProd = gulp.series('set-prod-node-env'),
+        build.setDev = gulp.series('set-dev-node-env'),
+        build.clean = gulp.series('clean'),
+        build.fullClean = gulp.series('full-clean');
+    build.def = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
+        build.one = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx)),
+        build.prod = gulp.series(build.setProd, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
+        build.prodOne = gulp.series(build.setProd, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx)),
+        build.dev = gulp.series(build.setDev, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
+        build.devOne = gulp.series(build.setDev, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx));
+    /* Автоматически создает задачи */
+    build.init = function (obj) {
+        var innerGulpObj = obj || gulp;
+        if (!innerGulpObj._registry._tasks.sass) innerGulpObj.task('sass', build.sass);
+        if (!innerGulpObj._registry._tasks.sassComponents) innerGulpObj.task('sassComponents', build.sassComponents);
+        if (!innerGulpObj._registry._tasks.sassProject) innerGulpObj.task('sassProject', build.sassProject);
+        if (!innerGulpObj._registry._tasks.js) innerGulpObj.task('js', build.js);
+        if (!innerGulpObj._registry._tasks.jsx) innerGulpObj.task('jsx', build.jsx);
+        if (!innerGulpObj._registry._tasks.jsComponents) innerGulpObj.task('jsComponents', build.jsComponents);
+        if (!innerGulpObj._registry._tasks.sprite) innerGulpObj.task('sprite', build.sprite);
+        if (!innerGulpObj._registry._tasks.img) innerGulpObj.task('img', build.img);
+        if (!innerGulpObj._registry._tasks.pic) innerGulpObj.task('pic', build.pic);
+        if (!innerGulpObj._registry._tasks.fonts) innerGulpObj.task('fonts', build.fonts);
+        if (!innerGulpObj._registry._tasks.watch) innerGulpObj.task('watch', build.watch);
+        if (!innerGulpObj._registry._tasks['set-prod-node-env']) innerGulpObj.task('set-prod-node-env', build.setProd);
+        if (!innerGulpObj._registry._tasks['set-dev-node-env']) innerGulpObj.task('set-dev-node-env', build.setDev);
+        if (!innerGulpObj._registry._tasks.clean) innerGulpObj.task('clean', build.clean);
+        if (!innerGulpObj._registry._tasks['full-clean']) innerGulpObj.task('full-clean', build.fullClean);
+        if (!innerGulpObj._registry._tasks['get-env']) innerGulpObj.task('get-env', build.getEnv);
+        build.def = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'),'watch'),
+            build.one = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx')),
+            build.prod = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'),'watch'),
+            build.prodOne = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx')),
+            build.dev = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'),'watch'),
+            build.devOne = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'));
+        if (!innerGulpObj._registry._tasks['default']) innerGulpObj.task('default', build.def);
+        if (!innerGulpObj._registry._tasks['one']) innerGulpObj.task('one', build.one);
+        if (!innerGulpObj._registry._tasks['prod']) innerGulpObj.task('prod', build.prod);
+        if (!innerGulpObj._registry._tasks['prodOne']) innerGulpObj.task('prodOne', build.prodOne);
+        if (!innerGulpObj._registry._tasks['dev']) innerGulpObj.task('dev', build.dev);
+        if (!innerGulpObj._registry._tasks['devOne']) innerGulpObj.task('devOne', build.devOne);
+    };
+    build.gulp = gulp;
+    return build;
 };
 
