@@ -12,10 +12,6 @@ module.exports = function (options) {
         browserSync  = require('browser-sync'),      // livereload
         reload       = browserSync.reload,
 
-        babel        = require('gulp-babel'),        // babel
-        es2015       = require('babel-preset-es2015'),
-        react        = require('babel-preset-react'),
-
         spritesmith  = require('gulp.spritesmith'),
         sourcemaps   = require('gulp-sourcemaps'),
 
@@ -36,8 +32,6 @@ module.exports = function (options) {
     var build = {};
 
     var __dirname = options.dirName || __dirname;
-
-
     /*Функция, которая выясняет является ли текущая среда разработкой*/
     var isDevelopment = function() {
         return !process.env.NODE_ENV || process.env.NODE_ENV == 'development';
@@ -46,7 +40,8 @@ module.exports = function (options) {
 
 // PATH
 // ====
-    var path = Object.assign(options.path, {
+    var path = {};
+    Object.assign(path, {
         build: {
             js:     'build/js/',
             css:    'build/css/',
@@ -91,7 +86,7 @@ module.exports = function (options) {
             build:   './build',
             modules: './node_modules'
         }
-    });
+    }, options.path);
 
     var includePath = options.includePath || '/assets/sass/global/include/',
         staticFolder = options.staticFolder || '/local/static/';
@@ -160,26 +155,6 @@ module.exports = function (options) {
         productionWatchDelay = options.productionWatchDelay || 1000;
 
 
-    /* Задача watcher-а */
-    gulp.task('watch', function() {
-        gulp.watch(path.src.sass, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sass'));
-        gulp.watch(path.src.sassInclude, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sassProject'));
-        gulp.watch(path.src.sassComponents, gulp.series('sassComponents')).on('unlink', function (e) {
-            del(getBuidExtension(e, 'css'), {force: true});
-            del(getBuidExtension(e, 'css.map'), {force: true});
-        });
-        gulp.watch(path.src.js, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('js'));
-        gulp.watch(path.src.jsx, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsx'));
-        gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsComponents')).on('unlink', function (e) {
-            del(getBuidExtension(e, 'js', path.build.js), {force: true});
-            del(getBuidExtension(e, 'js.map', path.build.js), {force: true});
-        });
-        gulp.watch(path.src.sprite, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sprite', 'sass'));
-        gulp.watch(path.src.img, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('img'));
-        gulp.watch(path.src.pic, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('pic'));
-        return gulp.watch(path.src.fonts, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('fonts'));
-    });
-
     /* Очистка билда */
     requireTask('clean', './src/clean', {path: path, gulp: gulp, callback: function () {}});
 
@@ -205,20 +180,43 @@ module.exports = function (options) {
     var inArray = function (str, array) {
         if (!array[0]) return true;
         return (array.indexOf(str) !== -1);
-    };
+    }
 
     /* Пустая функция */
     var skip = function (callback) {
         console.log('skipped');
         callback();
-    };
+    }
+
+
+    /* Задача watcher-а */
+    gulp.task('watch', function() {
+        gulp.watch(path.src.sass, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sass'));
+        gulp.watch(path.src.sassInclude, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sassProject'));
+        gulp.watch(path.src.sassComponents, gulp.series('sassComponents')).on('unlink', function (e) {
+            del(getBuidExtension(e, 'css'), {force: true});
+            del(getBuidExtension(e, 'css.map'), {force: true});
+        });
+        gulp.watch(path.src.js, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('js'));
+        gulp.watch(path.src.jsx, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsx'));
+        gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsComponents')).on('unlink', function (e) {
+            del(getBuidExtension(e, 'js', path.build.js), {force: true});
+            del(getBuidExtension(e, 'js.map', path.build.js), {force: true});
+        });
+        gulp.watch(path.src.sprite, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sprite', 'sass'));
+        gulp.watch(path.src.img, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('img'));
+        gulp.watch(path.src.pic, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('pic'));
+        return gulp.watch(path.src.fonts, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('fonts'));
+    });
+
+    var newTasks = [];
 
 
 // START
 // =====
     build.path = path;
     build.options = options;
-
+    build.newTasks = [];
     build.sass = !inArray('sass', options.excludeTasks) && inArray('sass', options.includeTasks) ? gulp.series('sass') : skip,
         build.sassComponents = !inArray('sassComponents', options.excludeTasks) && inArray('sassComponents', options.includeTasks) ? gulp.series('sassComponents') : skip,
         build.jsComponents = !inArray('jsComponents', options.excludeTasks) && inArray('jsComponents', options.includeTasks) ? gulp.series('jsComponents') : skip,
@@ -235,15 +233,22 @@ module.exports = function (options) {
         build.setDev = gulp.series('set-dev-node-env'),
         build.clean = gulp.series('clean'),
         build.fullClean = gulp.series('full-clean');
-    build.def = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
-        build.one = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx)),
-        build.prod = gulp.series(build.setProd, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
-        build.prodOne = gulp.series(build.setProd, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx)),
-        build.dev = gulp.series(build.setDev, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
-        build.devOne = gulp.series(build.setDev, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx));
+    /* Перестройка общих задач */
+    build.refreshBuild = function () {
+        Object.assign(path, build.path);
+        build.def = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.newTasks, build.watch),
+            build.one = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx)),
+            build.prod = gulp.series(build.setProd, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
+            build.prodOne = gulp.series(build.setProd, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx)),
+            build.dev = gulp.series(build.setDev, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.watch),
+            build.devOne = gulp.series(build.setDev, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx));
+    };
     /* Автоматически создает задачи */
-    build.init = function (obj) {
-        var innerGulpObj = obj || gulp;
+    build.init = function (obj, opt) {
+        var innerGulpObj = obj || gulp,
+            opt = opt || {},
+            initDefault = opt.initDefault ? 'default' : 'def';
+        Object.assign(path, build.path);
         if (!innerGulpObj._registry._tasks.sass) innerGulpObj.task('sass', build.sass);
         if (!innerGulpObj._registry._tasks.sassComponents) innerGulpObj.task('sassComponents', build.sassComponents);
         if (!innerGulpObj._registry._tasks.sassProject) innerGulpObj.task('sassProject', build.sassProject);
@@ -260,19 +265,32 @@ module.exports = function (options) {
         if (!innerGulpObj._registry._tasks.clean) innerGulpObj.task('clean', build.clean);
         if (!innerGulpObj._registry._tasks['full-clean']) innerGulpObj.task('full-clean', build.fullClean);
         if (!innerGulpObj._registry._tasks['get-env']) innerGulpObj.task('get-env', build.getEnv);
-        build.def = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'),'watch'),
-            build.one = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx')),
-            build.prod = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'),'watch'),
-            build.prodOne = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx')),
-            build.dev = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'),'watch'),
-            build.devOne = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'));
-        if (!innerGulpObj._registry._tasks['default']) innerGulpObj.task('default', build.def);
+        build.def = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks,'watch'),
+            build.one = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks),
+            build.prod = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks,'watch'),
+            build.prodOne = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks),
+            build.dev = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks,'watch'),
+            build.devOne = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks);
+        if (!innerGulpObj._registry._tasks['def']) innerGulpObj.task(initDefault, build.def);
         if (!innerGulpObj._registry._tasks['one']) innerGulpObj.task('one', build.one);
         if (!innerGulpObj._registry._tasks['prod']) innerGulpObj.task('prod', build.prod);
         if (!innerGulpObj._registry._tasks['prodOne']) innerGulpObj.task('prodOne', build.prodOne);
         if (!innerGulpObj._registry._tasks['dev']) innerGulpObj.task('dev', build.dev);
         if (!innerGulpObj._registry._tasks['devOne']) innerGulpObj.task('devOne', build.devOne);
+        for (var index = 0; index < build.newTasks.length; index++) {
+            if (!innerGulpObj._registry._tasks[newTasks[index]]) innerGulpObj.task(newTasks[index], build.newTasks[index]);
+        }
     };
+    build.addTask = function (name, task) {
+        gulp.task(name, gulp.series(task));
+        newTasks.push(name);
+        build.newTasks.push(gulp.series(task));
+        build[name] = gulp.series(task);
+        build.refreshBuild();
+    };
+
+    build.refreshBuild();
+
     build.gulp = gulp;
     return build;
 };
