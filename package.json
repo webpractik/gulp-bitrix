@@ -2,7 +2,7 @@
 {
   "name": "gulp-bitrix",
   "description": "Building Projects for BitrixCMS on Gulp",
-  "version": "0.2.4",
+  "version": "0.2.7",
   "author": {
     "name": "Webpractik",
     "email": "info@webpractik.ru"
@@ -47,7 +47,6 @@
     "gulp-sass": "^3.1.0",
     "gulp-sourcemaps": "^2.6.4",
     "gulp.spritesmith": "^6.9.0",
-    "imagemin-pngquant": "^5.0.1",
     "rimraf": "^2.6.2",
     "chokidar": "^2.0.2",
     "del": "^3.0.0",
