@@ -24,8 +24,8 @@ module.exports = function (options) {
 
     var options = options || {};
     options.path = options.path || {};
-    options.excludeTasks = options.excludeTasks || [];
-    options.includeTasks = options.includeTasks || ['0'];
+    options.excludeTasks = options.excludeTasks || ['1'];
+    options.includeTasks = options.includeTasks || [];
     options.sprite = {};
 
 
