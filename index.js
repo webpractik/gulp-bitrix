@@ -1,5 +1,5 @@
 'use strict';
-module.exports = function (options) {
+module.exports = function(options) {
     var gulp         = require('gulp'),
         plumber      = require('gulp-plumber'),		 // уведомления об ошибках
         autoprefixer = require('gulp-autoprefixer'), // установка префиксов
@@ -17,16 +17,17 @@ module.exports = function (options) {
 
         duration     = require('gulp-duration'),     // время выполнения
         debug        = require('gulp-debug'),       // отладка
-        chokidar	= require('chokidar'),
-        env			= require('node-env-file'),
-        del			= require('del'),
-        gulpIf      = require('gulp-if');
+        chokidar     = require('chokidar'),
+        env          = require('node-env-file'),
+        del          = require('del'),
+        deepExtend   = require('deep-extend'),
+        gulpIf       = require('gulp-if');
 
-    var options = options || {};
-    options.path = options.path || {};
+    var options          = options || {};
+    options.path         = options.path || {};
     options.excludeTasks = options.excludeTasks || ['1'];
     options.includeTasks = options.includeTasks || [];
-    options.sprite = {};
+    options.sprite       = {};
 
 
     var build = {};
@@ -41,7 +42,7 @@ module.exports = function (options) {
 // PATH
 // ====
     var path = {};
-    Object.assign(path, {
+    deepExtend(path, {
         build: {
             js:     'build/js/',
             css:    'build/css/',
@@ -58,7 +59,7 @@ module.exports = function (options) {
                 '!../../local/modules/'
             ],
             js:             'assets/js/**/*.js',
-            jsx:			'assets/js/**/*.jsx',
+            jsx:            'assets/js/**/*.jsx',
             sass:           'assets/sass/**/*.sass',
             sassInclude:    'assets/sass/global/**/_*.sass',
             sassProject:    'assets/sass/global/project.sass',
@@ -88,17 +89,18 @@ module.exports = function (options) {
         }
     }, options.path);
 
-    var includePath = options.includePath || '/assets/sass/global/include/',
+    var includePath  = options.includePath || '/assets/sass/global/include/',
         staticFolder = options.staticFolder || '/local/static/';
 
     function requireTask(taskName, path, options) {
-        options = options || {};
+        options          = options || {};
         options.taskName = taskName;
         gulp.task(taskName, function(callback) {
             require(path)(options);
             callback();
         });
     }
+
 // SASS
 // ====
     requireTask('sass', './src/sass', {path: path, includePath: includePath, gulp: gulp, sourcemaps: options.sourcemaps});
@@ -111,7 +113,7 @@ module.exports = function (options) {
 
 // SPRITE
 // ======
-    requireTask('sprite', './src/sprite', {path: path, gulp: gulp, staticFolder: staticFolder,  sprite: {imgName: options.sprite.imgName, cssName: options.sprite.cssName}});
+    requireTask('sprite', './src/sprite', {path: path, gulp: gulp, staticFolder: staticFolder, sprite: {imgName: options.sprite.imgName, cssName: options.sprite.cssName}});
 
 // PHP
 // ===
@@ -138,28 +140,34 @@ module.exports = function (options) {
     requireTask('browserSynch', './src/browserSynch', {gulp: gulp});
 
     /* Выводит расширение файла */
-    var getExtension = function (string) {
+    var getExtension          = function(string) {
             var arrStr = string.split('.');
             var strLen = arrStr[arrStr.length - 1];
             return strLen;
         },
 
         /* Возвращает путь к собранному файлу */
-        getBuidExtension = function (string, ext) {
+        getBuidExtension      = function(string, ext) {
             var strLen = getExtension(string).length;
             return string.substr(0, string.length - strLen) + ext;
         },
 
         /* Переменные задержки обработки watcher-а */
         developmentWatchDelay = options.developmentWatchDelay || 200,
-        productionWatchDelay = options.productionWatchDelay || 1000;
+        productionWatchDelay  = options.productionWatchDelay || 1000;
 
 
     /* Очистка билда */
-    requireTask('clean', './src/clean', {path: path, gulp: gulp, callback: function () {}});
+    requireTask('clean', './src/clean', {
+        path: path, gulp: gulp, callback: function() {
+        }
+    });
 
     /* Очистка полная */
-    requireTask('full-clean', './src/clean', {path: path, gulp: gulp, callback: function () {}});
+    requireTask('full-clean', './src/clean', {
+        path: path, gulp: gulp, callback: function() {
+        }
+    });
 
     /* Переключаем на окружение development */
     gulp.task('set-dev-node-env', function(callback) {
@@ -177,13 +185,13 @@ module.exports = function (options) {
     requireTask('get-env', './src/getEnv', {gulp: gulp, dirname: __dirname});
 
     /* Проверяем есть у массива данный элемент, если массив пустой - то возвращем true*/
-    var inArray = function (str, array) {
+    var inArray = function(str, array) {
         if (!array[0]) return true;
         return (array.indexOf(str) !== -1);
     }
 
     /* Пустая функция */
-    var skip = function (callback) {
+    var skip = function(callback) {
         console.log('skipped');
         callback();
     }
@@ -193,13 +201,13 @@ module.exports = function (options) {
     gulp.task('watch', function() {
         gulp.watch(path.src.sass, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sass'));
         gulp.watch(path.src.sassInclude, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('sassProject'));
-        gulp.watch(path.src.sassComponents, gulp.series('sassComponents')).on('unlink', function (e) {
+        gulp.watch(path.src.sassComponents, gulp.series('sassComponents')).on('unlink', function(e) {
             del(getBuidExtension(e, 'css'), {force: true});
             del(getBuidExtension(e, 'css.map'), {force: true});
         });
         gulp.watch(path.src.js, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('js'));
         gulp.watch(path.src.jsx, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsx'));
-        gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsComponents')).on('unlink', function (e) {
+        gulp.watch(path.src.jsComponents, {delay: isDevelopment() ? developmentWatchDelay : productionWatchDelay}, gulp.series('jsComponents')).on('unlink', function(e) {
             del(getBuidExtension(e, 'js', path.build.js), {force: true});
             del(getBuidExtension(e, 'js.map', path.build.js), {force: true});
         });
@@ -214,8 +222,8 @@ module.exports = function (options) {
 
 // START
 // =====
-    build.path = path;
-    build.options = options;
+    build.path     = path;
+    build.options  = options;
     build.newTasks = [];
     build.sass = !inArray('sass', options.excludeTasks) && inArray('sass', options.includeTasks) ? gulp.series('sass') : skip,
         build.sassComponents = !inArray('sassComponents', options.excludeTasks) && inArray('sassComponents', options.includeTasks) ? gulp.series('sassComponents') : skip,
@@ -224,7 +232,7 @@ module.exports = function (options) {
         build.js = !inArray('js', options.excludeTasks) && inArray('js', options.includeTasks) ? gulp.series('js') : skip,
         build.jsx = !inArray('jsx', options.excludeTasks) && inArray('jsx', options.includeTasks) ? gulp.series('jsx') : skip,
         build.sprite = !inArray('sprite', options.excludeTasks) && inArray('sprite', options.includeTasks) ? gulp.series('sprite') : skip,
-        build.img =	!inArray('img', options.excludeTasks) && inArray('img', options.includeTasks) ? gulp.series('img') : skip,
+        build.img = !inArray('img', options.excludeTasks) && inArray('img', options.includeTasks) ? gulp.series('img') : skip,
         build.pic = !inArray('pic', options.excludeTasks) && inArray('pic', options.includeTasks) ? gulp.series('pic') : skip,
         build.fonts = !inArray('fonts', options.excludeTasks) && inArray('fonts', options.includeTasks) ? gulp.series('fonts') : skip,
         build.watch = !inArray('watch', options.excludeTasks) && inArray('watch', options.includeTasks) ? gulp.series('watch') : skip,
@@ -234,7 +242,7 @@ module.exports = function (options) {
         build.clean = gulp.series('clean'),
         build.fullClean = gulp.series('full-clean');
     /* Перестройка общих задач */
-    build.refreshBuild = function () {
+    build.refreshBuild = function() {
         Object.assign(path, build.path);
         build.def = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx), build.newTasks, build.watch),
             build.one = gulp.series(build.getEnv, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx)),
@@ -244,10 +252,10 @@ module.exports = function (options) {
             build.devOne = gulp.series(build.setDev, build.sprite, build.img, build.pic, build.fonts, gulp.parallel(build.sass, build.sassComponents, build.sassProject, build.jsComponents, build.js, build.jsx));
     };
     /* Автоматически создает задачи */
-    build.init = function (obj, opt) {
+    build.init    = function(obj, opt) {
         var innerGulpObj = obj || gulp,
-            opt = opt || {},
-            initDefault = opt.initDefault ? 'default' : 'def';
+            opt          = opt || {},
+            initDefault  = opt.initDefault ? 'default' : 'def';
         Object.assign(path, build.path);
         if (!innerGulpObj._registry._tasks.sass) innerGulpObj.task('sass', build.sass);
         if (!innerGulpObj._registry._tasks.sassComponents) innerGulpObj.task('sassComponents', build.sassComponents);
@@ -265,11 +273,11 @@ module.exports = function (options) {
         if (!innerGulpObj._registry._tasks.clean) innerGulpObj.task('clean', build.clean);
         if (!innerGulpObj._registry._tasks['full-clean']) innerGulpObj.task('full-clean', build.fullClean);
         if (!innerGulpObj._registry._tasks['get-env']) innerGulpObj.task('get-env', build.getEnv);
-        build.def = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks,'watch'),
+        build.def = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks, 'watch'),
             build.one = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks),
-            build.prod = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks,'watch'),
+            build.prod = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks, 'watch'),
             build.prodOne = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks),
-            build.dev = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks,'watch'),
+            build.dev = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks, 'watch'),
             build.devOne = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks);
         if (!innerGulpObj._registry._tasks['def']) innerGulpObj.task(initDefault, build.def);
         if (!innerGulpObj._registry._tasks['one']) innerGulpObj.task('one', build.one);
@@ -281,7 +289,7 @@ module.exports = function (options) {
             if (!innerGulpObj._registry._tasks[newTasks[index]]) innerGulpObj.task(newTasks[index], build.newTasks[index]);
         }
     };
-    build.addTask = function (name, task) {
+    build.addTask = function(name, task) {
         gulp.task(name, gulp.series(task));
         newTasks.push(name);
         build.newTasks.push(gulp.series(task));

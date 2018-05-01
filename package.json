@@ -1,8 +1,7 @@
-
 {
   "name": "gulp-bitrix",
   "description": "Building Projects for BitrixCMS on Gulp",
-  "version": "0.2.7",
+  "version": "0.2.9",
   "author": {
     "name": "Webpractik",
     "email": "info@webpractik.ru"
@@ -19,10 +18,9 @@
     "sass"
   ],
   "devDependencies": {
-
   },
-
   "dependencies": {
+    "deep-extend": "^0.5.1",
     "babel-core": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
