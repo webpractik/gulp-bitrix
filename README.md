@@ -4,7 +4,7 @@
 
 Устаравливаем модуль:
 
-<pre>npm install gulp-bitrix</pre>
+<pre>npm install gulp-bitrix --save-dev</pre>
 
 В <b>gulpfile.js</b> вызываем модуль с параметрами. Например:
 
