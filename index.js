@@ -89,8 +89,13 @@ module.exports = function(options) {
         }
     }, options.path);
 
-    var includePath  = options.includePath || '/assets/sass/global/include/',
+    var includePath  = options.includePath || ['/assets/sass/global/include/'],
         staticFolder = options.staticFolder || '/local/static/';
+
+        includePath.map(function (currentValue, index, array) {
+            array[index] = process.env['INIT_CWD'] + currentValue;
+        });
+
 
     function requireTask(taskName, path, options) {
         options          = options || {};

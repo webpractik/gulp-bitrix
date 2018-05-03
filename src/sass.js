@@ -30,7 +30,7 @@ module.exports = function (options) {
         })))
         .pipe(gulpIf(isDevelopment() && options.sourcemaps, sourcemaps.init()))
         .pipe(sass.sync({
-            includePaths: [process.env['INIT_CWD'] + options.includePath]
+            includePaths: options.includePath
         }))
         .pipe(autoprefixer({
             browsers: ['last 12 versions', '> 1%'],
