@@ -44,52 +44,52 @@ module.exports = function(options) {
     var path = {};
     deepExtend(path, {
         build: {
-            js:     'build/js/',
-            css:    'build/css/',
-            img:    'build/img/',
-            pic:    'build/pic/',
-            fonts:  'build/fonts/',
-            sprite: 'build/img/sprite/'
+            js:     'local/static/build/js/',
+            css:    'local/static/build/css/',
+            img:    'local/static/build/img/',
+            pic:    'local/static/build/pic/',
+            fonts:  'local/static/build/fonts/',
+            sprite: 'local/static/build/img/sprite/'
         },
         src:   {
             php:            [
-                '../../local/**/*.php',
-                '!../../local/static/',
-                '!../../local/php_interface/',
-                '!../../local/modules/'
+                'local/**/*.php',
+                '!local/static/',
+                '!local/php_interface/',
+                '!local/modules/'
             ],
-            js:             'assets/js/**/*.js',
-            jsx:            'assets/js/**/*.jsx',
-            sass:           'assets/sass/**/*.sass',
-            sassInclude:    'assets/sass/global/**/_*.sass',
-            sassProject:    'assets/sass/global/project.sass',
-            img:            ['assets/img/**/*.*', '!assets/img/sprite/*.*'],
-            pic:            'assets/pic/**/*.*',
-            fonts:          'assets/fonts/**/*.*',
-            sprite:         'assets/img/sprite/*.*',
-            sprLang:        'assets/sass/global/include/',
+            js:             'local/static/assets/js/**/*.js',
+            jsx:            'local/static/assets/js/**/*.jsx',
+            sass:           'local/static/assets/sass/**/*.sass',
+            sassInclude:    'local/static/assets/sass/global/**/_*.sass',
+            sassProject:    'local/static/assets/sass/global/project.sass',
+            img:            ['local/static/assets/img/**/*.*', '!local/static/assets/img/sprite/*.*'],
+            pic:            'local/static/assets/pic/**/*.*',
+            fonts:          'local/static/assets/fonts/**/*.*',
+            sprite:         'local/static/assets/img/sprite/*.*',
+            sprLang:        'local/static/assets/sass/global/include/',
             sassComponents: [
-                '../templates/.default/components/**/style.sass',
-                '../templates/main/components/**/style.sass',
-                '../components/**/.default/style.sass',
-                '../components/**/style.sass',
-                '../templates/main/components/**/.default/style.sass',
-                '../templates/main/components/**/style.sass'
+                'local/templates/.default/components/**/style.sass',
+                'local/templates/main/components/**/style.sass',
+                'local/components/**/.default/style.sass',
+                'local/components/**/style.sass',
+                'local/templates/main/components/**/.default/style.sass',
+                'local/templates/main/components/**/style.sass'
             ],
             jsComponents:   [
-                '../templates/.default/components/bitrix/**/.default/**/*.jsx',
-                '../templates/.default/components/bitrix/**/*.jsx',
-                '../components/**/.default/**/*.jsx',
-                '../components/**/*.jsx'
+                'local/templates/.default/components/bitrix/**/.default/**/*.jsx',
+                'local/templates/.default/components/bitrix/**/*.jsx',
+                'local/components/**/.default/**/*.jsx',
+                'local/components/**/*.jsx'
             ]
         },
         clean: {
-            build:   './build',
+            build:   'local/static/build',
             modules: './node_modules'
         }
     }, options.path);
 
-    var includePath  = options.includePath || ['/assets/sass/global/include/'],
+    var includePath  = options.includePath || ['/local/static/assets/sass/global/include/'],
         staticFolder = options.staticFolder || '/local/static/';
 
         includePath.map(function (currentValue, index, array) {
@@ -193,13 +193,13 @@ module.exports = function(options) {
     var inArray = function(str, array) {
         if (!array[0]) return true;
         return (array.indexOf(str) !== -1);
-    }
+    };
 
     /* Пустая функция */
     var skip = function(callback) {
         console.log('skipped');
         callback();
-    }
+    };
 
 
     /* Задача watcher-а */
