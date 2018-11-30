@@ -30,7 +30,7 @@
     "webpack-stream": "^4.0.2",
     "node-env-file": "^0.1.8",
     "browser-sync": "^2.23.6",
-    "gulp": "github:gulpjs/gulp#4.0",
+    "gulp": "^4.0.0",
     "gulp-autoprefixer": "^5.0.0",
     "gulp-connect-php": "^1.0.3",
     "gulp-debug": "^3.2.0",
