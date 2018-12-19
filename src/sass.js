@@ -17,11 +17,6 @@ module.exports = function (options) {
     var gulp = options.gulp;
 
     return gulp.src(options.path.src.sass)
-        .pipe(newer({
-                dest: options.path.build.css,
-                ext:  '.css'
-            })
-        )
         .pipe(plumber(gulpIf(isDevelopment(), notify.onError({
             message: '<%= error.message %>',
             title: 'Sass Error!'
