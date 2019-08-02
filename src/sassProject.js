@@ -1,6 +1,6 @@
 'use strict';
 var plumber      = require('gulp-plumber'),		 // уведомления об ошибках
-    autoprefixer = require('gulp-autoprefixer'), // установка префиксов
+    autoprefixer = require('autoprefixer'), // установка префиксов
     notify       = require('gulp-notify'),       // всплывающие уведомления
     newer        = require('gulp-newer'),        // ограничение выборки для ускорения компиляции
     sass         = require('gulp-sass'),         // компилятор sass на C без compass
@@ -8,6 +8,7 @@ var plumber      = require('gulp-plumber'),		 // уведомления об о�
     sourcemaps   = require('gulp-sourcemaps'),
     duration     = require('gulp-duration'),     // время выполнения
     debug        = require('gulp-debug'),       // отладка
+    postcss = require('gulp-postcss'),
     gulpIf      = require('gulp-if');
 
 
@@ -29,11 +30,20 @@ module.exports = function (options) {
         .pipe(sass.sync({
             includePaths: options.includePath
         }))
-        .pipe(autoprefixer({
-            browsers: ['last 12 versions', '> 1%'],
-            cascade:  false,
-            remove:   false
-        }))
+        .pipe(postcss(
+            [ autoprefixer(
+                {
+                    cascade: false,
+                    grid: "autoplace",
+                    overrideBrowserslist: [
+                        "last 15 version",
+                        "> 0.2%",
+                        "maintained node versions",
+                        "not dead"
+                    ]
+                })
+            ]
+        ))
         .pipe(debug({'title': '- sassProject'}))
         .pipe(duration('sassProject time'))
         .pipe(gulpIf(isDevelopment() && options.sourcemaps, sourcemaps.write()))
