@@ -8,6 +8,7 @@ var plumber      = require('gulp-plumber'),		 // уведомления об о�
     duration     = require('gulp-duration'),     // время выполнения
     debug        = require('gulp-debug'),       // отладка
     postcss = require('gulp-postcss'),
+    cssnano = require('gulp-cssnano'),
     gulpIf      = require('gulp-if');
 
 var isDevelopment = function() {
@@ -42,6 +43,7 @@ module.exports = function (options) {
                 })
             ]
         ))
+        .pipe(gulpIf(options.cssMinify, cssnano()))
         .pipe(debug({'title': '- sass'}))
         .pipe(duration('sass time'))
         .pipe(gulpIf(isDevelopment() && options.sourcemaps, sourcemaps.write()))

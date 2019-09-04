@@ -2,7 +2,6 @@ var gulp         = require('gulp'),
     plumber      = require('gulp-plumber'),		 // уведомления об ошибках
     notify       = require('gulp-notify'),       // всплывающие уведомления
     newer        = require('gulp-newer'),        // ограничение выборки для ускорения компиляции
-    jscs         = require('gulp-jscs'),         // проверка js файлов на стандарт
     babel        = require('gulp-babel'),        // babel
     sourcemaps   = require('gulp-sourcemaps'),
     duration     = require('gulp-duration'),     // время выполнения

@@ -8,7 +8,6 @@ module.exports = function(options) {
         newer        = require('gulp-newer'),        // ограничение выборки для ускорения компиляции
         sass         = require('gulp-sass'),         // компилятор sass на C без compass
         rimraf       = require('rimraf'),            // удаление файлов
-        jscs         = require('gulp-jscs'),         // проверка js файлов на стандарт
         browserSync  = require('browser-sync'),      // livereload
         reload       = browserSync.reload,
 
@@ -27,6 +26,7 @@ module.exports = function(options) {
     options.path         = options.path || {};
     options.excludeTasks = options.excludeTasks || ['1'];
     options.includeTasks = options.includeTasks || [];
+    options.cssMinify = options.cssMinify || false;
     options.sprite       = {};
 
 
@@ -52,12 +52,6 @@ module.exports = function(options) {
             sprite: 'local/static/build/img/sprite/'
         },
         src:   {
-            php:            [
-                'local/**/*.php',
-                '!local/static/',
-                '!local/php_interface/',
-                '!local/modules/'
-            ],
             js:             'local/static/assets/js/**/*.js',
             jsx:            'local/static/assets/js/**/*.jsx',
             sass:           'local/static/assets/sass/**/*.sass',
@@ -108,36 +102,79 @@ module.exports = function(options) {
 
 // SASS
 // ====
-    requireTask('sass', './src/sass', {path: path, includePath: includePath, gulp: gulp, sourcemaps: options.sourcemaps});
+    requireTask('sass', './src/sass', {
+        path: path,
+        includePath: includePath,
+        gulp: gulp,
+        sourcemaps: options.sourcemaps,
+        cssMinify: options.cssMinify
+    });
 // components
-    requireTask('sassComponents', './src/sassComponents', {path: path, includePath: includePath, gulp: gulp, sourcemaps: options.sourcemaps});
+    requireTask('sassComponents', './src/sassComponents', {
+        path: path,
+        includePath: includePath,
+        gulp: gulp,
+        sourcemaps: options.sourcemaps,
+        cssMinify: options.cssMinify
+    });
 
 // project
 // данный task по сути костыль, чтобы обойти newer и подкючаемые файлы (_*.sass) запускались
-    requireTask('sassProject', './src/sassProject', {path: path, includePath: includePath, gulp: gulp, sourcemaps: options.sourcemaps});
+    requireTask('sassProject', './src/sassProject', {
+        path: path,
+        includePath: includePath,
+        gulp: gulp,
+        sourcemaps: options.sourcemaps,
+        cssMinify: options.cssMinify
+    });
 
 // SPRITE
 // ======
-    requireTask('sprite', './src/sprite', {path: path, gulp: gulp, staticFolder: staticFolder, sprite: {imgName: options.sprite.imgName, cssName: options.sprite.cssName}});
-
-// PHP
-// ===
-    requireTask('php', './src/php', {gulp: gulp, path: path});
+    requireTask('sprite', './src/sprite', {
+        path: path,
+        gulp: gulp,
+        staticFolder: staticFolder,
+        sprite: {
+            imgName: options.sprite.imgName,
+            cssName: options.sprite.cssName
+        }
+    });
 
 // JS
 // ==
-    requireTask('js', './src/js', {path: path, gulp: gulp, sourcemaps: options.sourcemaps});
-    requireTask('jsx', './src/jsx', {path: path, gulp: gulp, sourcemaps: options.sourcemaps});
-    requireTask('jsComponents', './src/jsComponents', {path: path, gulp: gulp, sourcemaps: options.sourcemaps});
+    requireTask('js', './src/js', {
+        path: path,
+        gulp: gulp,
+        sourcemaps: options.sourcemaps
+    });
+    requireTask('jsx', './src/jsx', {
+        path: path,
+        gulp: gulp,
+        sourcemaps: options.sourcemaps
+    });
+    requireTask('jsComponents', './src/jsComponents', {
+        path: path,
+        gulp: gulp,
+        sourcemaps: options.sourcemaps
+    });
 
 // IMAGES
 // ======
-    requireTask('img', './src/img', {path: path, gulp: gulp});
-    requireTask('pic', './src/pic', {path: path, gulp: gulp});
+    requireTask('img', './src/img', {
+        path: path,
+        gulp: gulp
+    });
+    requireTask('pic', './src/pic', {
+        path: path,
+        gulp: gulp
+    });
 
 // FONTS
 // =====
-    requireTask('fonts', './src/fonts', {path: path, gulp: gulp});
+    requireTask('fonts', './src/fonts', {
+        path: path,
+        gulp: gulp
+    });
 
 
 // SERVER (only for local development)
@@ -164,13 +201,17 @@ module.exports = function(options) {
 
     /* Очистка билда */
     requireTask('clean', './src/clean', {
-        path: path, gulp: gulp, callback: function() {
+        path: path,
+        gulp: gulp,
+        callback: function() {
         }
     });
 
     /* Очистка полная */
     requireTask('full-clean', './src/clean', {
-        path: path, gulp: gulp, callback: function() {
+        path: path,
+        gulp: gulp,
+        callback: function() {
         }
     });
 
