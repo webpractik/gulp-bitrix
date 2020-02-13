@@ -16,7 +16,7 @@
 <h4>Задачи:</h4>
 Модуль возвращет объект, который содержит в себе функции, которые можно вызывать в задаче.
 
-На данный момент, содержит в себе задачи:r
+На данный момент, содержит в себе задачи:
 
 <b style="color: red">def</b> - выполняется сборка и включается watcher <br>
 <b style="color: red">one</b> - выполняется сборка, без запуска watcher <br>
@@ -24,6 +24,7 @@
 <b style="color: red">one</b> - выполняется сборка c настройками среды development, без запуска watcher <br>
 <b style="color: red">prod</b> - выполняется сборка c настройками среды production и включается watcher <br>
 <b style="color: red">prodOne</b> - выполняется сборка c настройками среды production, без запуска watcher <br>
+<b style="color: red">sprite</b> - выполняется сборка файла _sprite.sass <br>
 <b style="color: red">sass</b> - сборка sass-файлов <br>
 <b style="color: red">sassProject</b> - сборка файла project.css <br>
 <b style="color: red">sassComponents</b> - сборка стилей в папках компонентов Битрикса <br>
@@ -44,6 +45,10 @@
 <b style="color: red">path</b> - пути к файлам проекта по-умолчанию <br>
 <b style="color: red">options</b> - путь к переданным опциям <br>
 <b style="color: red">gulp</b> - ссылка на объект gulp модуля <br>
+
+**UPD v0.3.4**  
+Из задачи prodOne удалена сборка sprite  
+Добавлена новая задача `sprite`, которая отдельно собирает файл _sprite.sass
 
 
 Пример использования модуля через свойство:

@@ -322,13 +322,15 @@ module.exports = function(options) {
         build.def = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks, 'watch'),
             build.one = innerGulpObj.series('get-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks),
             build.prod = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks, 'watch'),
-            build.prodOne = innerGulpObj.series('set-prod-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks),
+            build.prodOne = innerGulpObj.series('set-prod-node-env', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks),
+            build.sprite = innerGulpObj.series('set-prod-node-env', 'sprite'), build.newTasks,
             build.dev = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks, 'watch'),
             build.devOne = innerGulpObj.series('set-dev-node-env', 'sprite', 'img', 'pic', 'fonts', innerGulpObj.parallel('sass', 'sassComponents', 'sassProject', 'jsComponents', 'js', 'jsx'), build.newTasks);
         if (!innerGulpObj._registry._tasks['def']) innerGulpObj.task(initDefault, build.def);
         if (!innerGulpObj._registry._tasks['one']) innerGulpObj.task('one', build.one);
         if (!innerGulpObj._registry._tasks['prod']) innerGulpObj.task('prod', build.prod);
         if (!innerGulpObj._registry._tasks['prodOne']) innerGulpObj.task('prodOne', build.prodOne);
+        if (!innerGulpObj._registry._tasks['sprite']) innerGulpObj.task('sprite', build.sprite);
         if (!innerGulpObj._registry._tasks['dev']) innerGulpObj.task('dev', build.dev);
         if (!innerGulpObj._registry._tasks['devOne']) innerGulpObj.task('devOne', build.devOne);
         for (var index = 0; index < build.newTasks.length; index++) {
@@ -348,4 +350,3 @@ module.exports = function(options) {
     build.gulp = gulp;
     return build;
 };
-
