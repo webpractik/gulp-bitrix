@@ -26,7 +26,6 @@
     "@babel/preset-env": "^7.5.5",
     "@babel/preset-react": "^7.0.0",
     "gulp-babel": "^8.0.0",
-    "catch-js-errors": "^1.0.2",
     "node-env-file": "^0.1.8",
     "browser-sync": "^2.23.6",
     "gulp": "^4.0.2",
